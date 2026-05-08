@@ -53,7 +53,7 @@ services:
         MAX_OLD_SPACE_SIZE: ${MAX_OLD_SPACE_SIZE:-6144}
     restart: always
     ports:
-      - "3000:3000"
+      - "6172:3000"
     env_file:
       - .env
     depends_on:
