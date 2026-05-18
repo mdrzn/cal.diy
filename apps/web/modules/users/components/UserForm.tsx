@@ -7,7 +7,7 @@ import { defaultLocaleOption, localeOptions } from "@calcom/lib/i18n";
 import { nameOfDay } from "@calcom/lib/weekday";
 import { Avatar } from "@calcom/ui/components/avatar";
 import { Button } from "@calcom/ui/components/button";
-import { Checkbox, EmailField, Form, Label, Select, TextField } from "@calcom/ui/components/form";
+import { CheckboxField, EmailField, Form, Label, Select, TextField } from "@calcom/ui/components/form";
 import { ImageUploader } from "@calcom/ui/components/image-uploader";
 import { TimezoneSelect } from "@calcom/web/modules/timezone/components/TimezoneSelect";
 import { noop } from "lodash";
@@ -225,7 +225,7 @@ export function UserForm({
         name="emailVerified"
         control={form.control}
         render={({ field: { value, onChange } }) => (
-          <Checkbox
+          <CheckboxField
             description="Email verified"
             checked={!!value}
             onChange={(e) => onChange(e.target.checked)}
