@@ -24,6 +24,8 @@ interface User {
   role: string | null;
   avatarUrl: string | null;
   createdDate?: string | Date;
+  // CORSI: see _router.ts — admins can flip the verified state manually.
+  emailVerified?: string | Date | null;
 }
 
 export function UsersEditView({ user }: { user: User }) {
@@ -63,6 +65,14 @@ export function UsersEditView({ user }: { user: User }) {
           identityProvider: values.identityProvider?.value,
           role: values.role?.value,
           avatarUrl: values.avatarUrl,
+          // CORSI: checkbox in UserForm becomes a Date (now) or null on submit.
+          // Preserve the original verified timestamp if it was already set, so saving
+          // an already-verified user doesn't bump the verification date.
+          emailVerified: values.emailVerified
+            ? user.emailVerified
+              ? new Date(user.emailVerified)
+              : new Date()
+            : null,
           userId: user.id,
         };
         if (user.username === data.username) delete data.username;

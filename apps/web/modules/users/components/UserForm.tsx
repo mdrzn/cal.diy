@@ -7,7 +7,7 @@ import { defaultLocaleOption, localeOptions } from "@calcom/lib/i18n";
 import { nameOfDay } from "@calcom/lib/weekday";
 import { Avatar } from "@calcom/ui/components/avatar";
 import { Button } from "@calcom/ui/components/button";
-import { EmailField, Form, Label, Select, TextField } from "@calcom/ui/components/form";
+import { Checkbox, EmailField, Form, Label, Select, TextField } from "@calcom/ui/components/form";
 import { ImageUploader } from "@calcom/ui/components/image-uploader";
 import { TimezoneSelect } from "@calcom/web/modules/timezone/components/TimezoneSelect";
 import { noop } from "lodash";
@@ -30,6 +30,8 @@ interface User {
   role: string | null;
   avatarUrl: string | null;
   createdDate?: string | Date;
+  // CORSI: lets admins flip the verified state directly from the user-edit page.
+  emailVerified?: string | Date | null;
 }
 
 type Option<T extends string | number = string> = {
@@ -58,7 +60,10 @@ export type FormValues = Pick<
   | "defaultScheduleId"
   | "allowDynamicBooking"
 > &
-  OptionValues;
+  OptionValues & {
+    // CORSI: rendered as a checkbox; converted to Date|null in users-edit-view.tsx onSubmit.
+    emailVerified: boolean;
+  };
 
 export function UserForm({
   defaultValues,
@@ -137,6 +142,8 @@ export function UserForm({
           identityProviderOptions.find((option) => option.value === defaultValues?.identityProvider)?.label ||
           identityProviderOptions[0].label,
       },
+      // CORSI: defaults to current verified state. Truthy if any timestamp exists.
+      emailVerified: !!defaultValues?.emailVerified,
     },
   });
 
@@ -213,6 +220,18 @@ export function UserForm({
       <TextField label={t("name")} placeholder="example" required {...form.register("name")} />
       <TextField label={t("username")} placeholder="example" required {...form.register("username")} />
       <EmailField label={t("email")} placeholder="user@example.com" required {...form.register("email")} />
+      {/* CORSI: admin override to bypass SMTP-based email verification. */}
+      <Controller
+        name="emailVerified"
+        control={form.control}
+        render={({ field: { value, onChange } }) => (
+          <Checkbox
+            description="Email verified"
+            checked={!!value}
+            onChange={(e) => onChange(e.target.checked)}
+          />
+        )}
+      />
       <TextField label={t("about")} {...form.register("bio")} />
       <Controller
         name="locale"

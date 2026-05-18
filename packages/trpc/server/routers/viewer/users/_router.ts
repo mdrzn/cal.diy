@@ -29,6 +29,9 @@ const userBodySchema = UserSchema.pick({
   identityProvider: true,
   role: true,
   avatarUrl: true,
+  // CORSI: expose emailVerified so admins can manually verify accounts (needed
+  // when SMTP is not yet wired and the invite/verification email cannot be sent).
+  emailVerified: true,
 });
 
 /** Reusable logic that checks for admin permissions and if the requested user exists */
