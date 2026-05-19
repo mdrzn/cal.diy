@@ -372,10 +372,20 @@ async function main() {
       periodCountCalendarDays: evt.periodDays ? true : null,
     } as const;
 
+    // CORSI: EventType has two owner-style relations:
+    //   - `userId` (direct, set above) and
+    //   - `users` (M2M `_user_eventtype`) which the public profile + dashboard
+    //     queries use to resolve event types per user.
+    // Both must be populated; missing the M2M means /<username>/<slug> 404s.
     const result = await prisma.eventType.upsert({
       where: { userId_slug: { userId: owner.id, slug: evt.slug } },
-      update: data,
-      create: { ...data, slug: evt.slug, userId: owner.id },
+      update: { ...data, users: { connect: [{ id: owner.id }] } },
+      create: {
+        ...data,
+        slug: evt.slug,
+        userId: owner.id,
+        users: { connect: [{ id: owner.id }] },
+      },
     });
 
     // Differentiate created vs updated by checking createdAt vs now.
