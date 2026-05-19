@@ -56,6 +56,20 @@ services:
       - "6172:3000"
     env_file:
       - .env
+    # CORSI: NEXTAUTH_URL_INTERNAL must be hardcoded here (NOT just in the env
+    # file) because next-auth's react helpers cache process.env at module-load
+    # time. Setting it in Dokploy's env tab proved unreliable — the variable
+    # didn't make it into the running container despite appearing in the UI.
+    #
+    # Without this var, every SSR auth page (/auth/login, /auth/forgot-password,
+    # etc.) tries to fetch its own public URL for the CSRF token, which fails
+    # on Hetzner because the container can't hairpin to its own public IP →
+    # 10+ second fetch timeouts on every auth page render.
+    #
+    # localhost:3000 = the cal.com Next.js process inside this same container,
+    # reached via loopback (no DNS, no TLS, no Traefik).
+    environment:
+      NEXTAUTH_URL_INTERNAL: http://localhost:3000
     depends_on:
       database:
         condition: service_healthy
