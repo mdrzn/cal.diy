@@ -61,6 +61,38 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+    # CORSI: attach to Dokploy's shared Traefik network so the reverse proxy can
+    # reach the container. Default compose network alone is unreachable from Traefik.
+    networks:
+      - default
+      - dokploy-network
+    # CORSI: Traefik labels so Dokploy's reverse proxy routes cal.corsi.it → :3000.
+    # Dokploy's Domain UI does NOT auto-inject labels in Docker Compose mode — only
+    # in Application mode — so we declare them manually here.
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=dokploy-network
+      # HTTPS router (websecure entrypoint)
+      - traefik.http.routers.calcom-https.rule=Host(`cal.corsi.it`)
+      - traefik.http.routers.calcom-https.entrypoints=websecure
+      - traefik.http.routers.calcom-https.tls=true
+      - traefik.http.routers.calcom-https.tls.certresolver=letsencrypt
+      - traefik.http.routers.calcom-https.service=calcom-svc
+      # HTTP router (redirects to HTTPS)
+      - traefik.http.routers.calcom-http.rule=Host(`cal.corsi.it`)
+      - traefik.http.routers.calcom-http.entrypoints=web
+      - traefik.http.routers.calcom-http.middlewares=calcom-redirect-https
+      # Redirect-to-HTTPS middleware
+      - traefik.http.middlewares.calcom-redirect-https.redirectscheme.scheme=https
+      - traefik.http.middlewares.calcom-redirect-https.redirectscheme.permanent=true
+      # Service: forward to container port 3000
+      - traefik.http.services.calcom-svc.loadbalancer.server.port=3000
+
+networks:
+  default:
+  # Dokploy creates this network at install time; reference it as external here.
+  dokploy-network:
+    external: true
 
 volumes:
   database-data:
