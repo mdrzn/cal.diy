@@ -1,6 +1,5 @@
 import type { PageProps as ServerPageProps } from "app/_types";
 import { _generateMetadata } from "app/_utils";
-import { getCsrfToken } from "next-auth/react";
 import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 
@@ -10,6 +9,11 @@ import { buildLegacyCtx } from "@lib/buildLegacyCtx";
 
 import ForgotPassword from "~/auth/forgot-password/forgot-password-view";
 
+// CORSI: removed `getCsrfToken(context)` SSR call. The container can't hairpin
+// to its own public URL on Hetzner, so next-auth's server-to-self fetch hangs
+// for ~10s on every render. The forgot-password form posts JSON directly to
+// /api/auth/forgot-password and doesn't use the CSRF token at all (the hidden
+// input in forgot-password-view.tsx is unused — kept for upstream parity).
 export const generateMetadata = async () => {
   return await _generateMetadata(
     (t) => t("forgot_password"),
@@ -28,9 +32,7 @@ const ServerPage = async ({ params, searchParams }: ServerPageProps) => {
     redirect("/");
   }
 
-  const csrfToken = await getCsrfToken(context);
-
-  return <ForgotPassword csrfToken={csrfToken} />;
+  return <ForgotPassword csrfToken={undefined} />;
 };
 
 export default ServerPage;

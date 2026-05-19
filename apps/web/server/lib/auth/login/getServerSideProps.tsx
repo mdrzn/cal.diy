@@ -6,7 +6,10 @@ import prisma from "@calcom/prisma";
 import { IS_GOOGLE_LOGIN_ENABLED } from "@server/lib/constants";
 import { jwtVerify } from "jose";
 import type { GetServerSidePropsContext } from "next";
-import { getCsrfToken } from "next-auth/react";
+// CORSI: removed `getCsrfToken` import. Server-side it fetches /api/auth/csrf
+// over the public NEXTAUTH_URL; on Hetzner this hairpins back to the container
+// and hangs ~10s. The login form uses signIn() client-side which fetches the
+// CSRF token on demand, so the SSR-supplied csrfToken prop is unused at runtime.
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const { req, query } = context;
@@ -86,7 +89,8 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   }
   return {
     props: {
-      csrfToken: await getCsrfToken(context),
+      // CORSI: was `await getCsrfToken(context)` — see top-of-file comment.
+      csrfToken: "",
       isGoogleLoginEnabled: IS_GOOGLE_LOGIN_ENABLED,
       isOutlookLoginEnabled: false,
       totpEmail,

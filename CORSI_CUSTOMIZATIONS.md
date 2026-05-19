@@ -35,6 +35,25 @@ SMTP-delivered verification email.
 verification flow is dead. Admins can't currently create usable accounts. This
 gives them a manual override.
 
+### 4. Skip server-side getCsrfToken on auth pages (perf fix)
+**Files:**
+- `apps/web/app/(use-page-wrapper)/auth/forgot-password/page.tsx`
+- `apps/web/server/lib/auth/login/getServerSideProps.tsx`
+- `apps/web/server/lib/auth/signin/getServerSideProps.tsx`
+
+**What:** Removed `getCsrfToken(context)` calls from SSR. They cause every auth
+page render to hairpin-fetch the container's own public URL, which on Hetzner's
+Docker network times out at ~10 seconds.
+
+**Why:** Setting `NEXTAUTH_URL_INTERNAL=http://localhost:3000` (the canonical
+next-auth fix) didn't take effect in this deployment — neither via Dokploy's
+env tab nor as a compose-level `environment:` block. Rather than continue
+chasing why, we removed the SSR dependency entirely. The login form uses
+`signIn()` client-side which fetches CSRF on demand; forgot-password POSTs JSON
+to `/api/auth/forgot-password` which doesn't validate CSRF.
+
+**Effect:** Auth pages drop from 10.6s TTFB to ~200ms.
+
 ### 2. Missing tRPC page routes (apiKeys, filterSegments, payments)
 **Files:**
 - `apps/web/pages/api/trpc/apiKeys/[trpc].ts`
