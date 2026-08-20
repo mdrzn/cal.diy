@@ -1,5 +1,5 @@
+import type { CalendarEvent } from "@calcom/types/Calendar";
 import { describe, expect, it, vi } from "vitest";
-
 import { getReplyToHeader } from "./getReplyToHeader";
 
 /**
@@ -10,21 +10,23 @@ import { getReplyToHeader } from "./getReplyToHeader";
 
 vi.mock("./getReplyToEmail", () => ({
   getReplyToEmail: vi.fn((calEvent, excludeOrganizerEmail) => {
+    if (calEvent.customReplyToEmail) return calEvent.customReplyToEmail;
     if (excludeOrganizerEmail) return null;
     return calEvent.organizer?.email || null;
   }),
 }));
 
-const createMockCalEvent = (organizerEmail: string) => ({
-  organizer: { email: organizerEmail },
-  hideOrganizerEmail: false,
-});
+const createMockCalEvent = (organizerEmail: string) =>
+  ({
+    organizer: { email: organizerEmail },
+    hideOrganizerEmail: false,
+  }) as CalendarEvent;
 
 describe("getReplyToHeader", () => {
   describe("return type", () => {
     it("always returns replyTo as a string, never an array", () => {
       const calEvent = createMockCalEvent("organizer@test.com");
-      const result = getReplyToHeader(calEvent as any, ["attendee1@test.com", "attendee2@test.com"]);
+      const result = getReplyToHeader(calEvent, ["attendee1@test.com", "attendee2@test.com"]);
 
       expect(result).toHaveProperty("replyTo");
       expect(typeof result.replyTo).toBe("string");
@@ -36,14 +38,14 @@ describe("getReplyToHeader", () => {
   describe("with single email", () => {
     it("returns single email as string", () => {
       const calEvent = createMockCalEvent("organizer@test.com");
-      const result = getReplyToHeader(calEvent as any);
+      const result = getReplyToHeader(calEvent);
 
       expect(result).toEqual({ replyTo: "organizer@test.com" });
     });
 
     it("returns additionalEmail as string when provided alone", () => {
       const calEvent = createMockCalEvent("organizer@test.com");
-      const result = getReplyToHeader(calEvent as any, "additional@test.com", true);
+      const result = getReplyToHeader(calEvent, "additional@test.com", true);
 
       expect(result).toEqual({ replyTo: "additional@test.com" });
     });
@@ -52,7 +54,7 @@ describe("getReplyToHeader", () => {
   describe("with multiple emails", () => {
     it("returns comma-separated string for multiple emails", () => {
       const calEvent = createMockCalEvent("organizer@test.com");
-      const result = getReplyToHeader(calEvent as any, ["attendee1@test.com", "attendee2@test.com"]);
+      const result = getReplyToHeader(calEvent, ["attendee1@test.com", "attendee2@test.com"]);
 
       expect(result).toEqual({
         replyTo: "attendee1@test.com, attendee2@test.com, organizer@test.com",
@@ -61,7 +63,7 @@ describe("getReplyToHeader", () => {
 
     it("returns comma-separated string when additionalEmails is array", () => {
       const calEvent = createMockCalEvent("organizer@test.com");
-      const result = getReplyToHeader(calEvent as any, ["a@test.com", "b@test.com", "c@test.com"], true);
+      const result = getReplyToHeader(calEvent, ["a@test.com", "b@test.com", "c@test.com"], true);
 
       expect(result).toEqual({
         replyTo: "a@test.com, b@test.com, c@test.com",
@@ -71,8 +73,8 @@ describe("getReplyToHeader", () => {
 
   describe("with no emails", () => {
     it("returns empty object when no emails available", () => {
-      const calEvent = { organizer: { email: "" }, hideOrganizerEmail: true };
-      const result = getReplyToHeader(calEvent as any, undefined, true);
+      const calEvent = { organizer: { email: "" }, hideOrganizerEmail: true } as CalendarEvent;
+      const result = getReplyToHeader(calEvent, undefined, true);
 
       expect(result).toEqual({});
     });
@@ -81,12 +83,24 @@ describe("getReplyToHeader", () => {
   describe("SMTP compatibility", () => {
     it("produces RFC 5322 compliant Reply-To header format", () => {
       const calEvent = createMockCalEvent("organizer@test.com");
-      const result = getReplyToHeader(calEvent as any, ["a@test.com", "b@test.com"]);
+      const result = getReplyToHeader(calEvent, ["a@test.com", "b@test.com"]);
 
       // RFC 5322 specifies comma-separated list for multiple addresses
       expect(result.replyTo).toMatch(/^[^,]+, [^,]+, [^,]+$/);
       expect(result.replyTo).not.toContain("[");
       expect(result.replyTo).not.toContain("]");
+    });
+  });
+
+  describe("with hideOrganizerEmail and customReplyToEmail", () => {
+    it("uses customReplyToEmail even when hideOrganizerEmail is true", () => {
+      const calEvent = {
+        organizer: { email: "org@test.com" },
+        hideOrganizerEmail: true,
+        customReplyToEmail: "custom@test.com",
+      } as CalendarEvent;
+      const result = getReplyToHeader(calEvent, undefined, true);
+      expect(result).toEqual({ replyTo: "custom@test.com" });
     });
   });
 });

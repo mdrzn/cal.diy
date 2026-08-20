@@ -1,5 +1,4 @@
 import type { CalendarEvent } from "@calcom/types/Calendar";
-
 import { getReplyToEmail } from "./getReplyToEmail";
 
 export function getReplyToHeader(
@@ -7,27 +6,19 @@ export function getReplyToHeader(
   additionalEmails?: string | string[],
   excludeOrganizerEmail?: boolean
 ) {
-  if (calEvent.hideOrganizerEmail) return {};
+  const shouldExcludeOrganizer = excludeOrganizerEmail || calEvent.hideOrganizerEmail;
+  const replyToEmail = getReplyToEmail(calEvent, shouldExcludeOrganizer);
 
-  const replyToEmail = getReplyToEmail(calEvent, excludeOrganizerEmail);
   const emailArray: string[] = [];
-
   if (additionalEmails) {
-    if (Array.isArray(additionalEmails)) {
-      emailArray.push(...additionalEmails);
-    } else {
-      emailArray.push(additionalEmails);
-    }
+    Array.isArray(additionalEmails)
+      ? emailArray.push(...additionalEmails)
+      : emailArray.push(additionalEmails);
   }
-
   if (replyToEmail) {
     emailArray.push(replyToEmail);
   }
+  if (emailArray.length === 0) return {};
 
-  if (emailArray.length === 0) {
-    return {};
-  }
-
-  const replyTo = emailArray.join(", ");
-  return { replyTo };
+  return { replyTo: emailArray.join(", ") };
 }

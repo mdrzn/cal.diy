@@ -1,4 +1,4 @@
-> [!WARNING]  
+> [!WARNING]
 > Use at your own risk. Cal.diy is the open source community edition of Cal.com and it is intended for users who want to self-host their own Cal.diy instance. It is strictly recommended for personal, non-production use. Please review all installation and configuration steps carefully. Self-hosting requires advanced knowledge of server administration, database management, and securing sensitive data. Proceed only if you are comfortable with these responsibilities.
 
 > [!TIP]
@@ -17,9 +17,6 @@
     <br />
     <a href="https://github.com/calcom/cal.diy"><strong>GitHub</strong></a>
     <br />
-    <br />
-    <a href="https://github.com/calcom/cal.diy/discussions">Discussions</a>
-    &middot;
     <a href="https://github.com/calcom/cal.diy/issues">Issues</a>
     &middot;
     <a href="./CONTRIBUTING.md">Contributing</a>
@@ -218,6 +215,7 @@ for Logger level to be set at info, for example.
 
    If you don't want to create a local DB. Then you can also consider using services like railway.app, Northflank or render.
 
+
    - [Setup postgres DB with railway.app](https://docs.railway.app/guides/postgresql)
    - [Setup postgres DB with Northflank](https://northflank.com/guides/deploy-postgres-database-on-northflank)
    - [Setup postgres DB with render](https://render.com/docs/databases)
@@ -237,6 +235,15 @@ for Logger level to be set at info, for example.
    ```sh
    yarn workspace @calcom/prisma db-deploy
    ```
+
+  **Note for Windows/PowerShell users:** If running the database deployment scripts fails with an error stating `Environment variable not found: DATABASE_DIRECT_URL`, Turbo might be failing to inject the root `.env` variables. You can bypass this by executing the commands directly from the prisma package directory in PowerShell:
+
+```powershell
+cd packages/prisma
+$env:DATABASE_URL="postgresql://postgres:YOUR_PASSWORD@localhost:5432/postgres"; $env:DATABASE_DIRECT_URL="postgresql://postgres:YOUR_PASSWORD@localhost:5432/postgres"
+npx prisma db push
+cd ../..
+```
 
 4. Run [mailhog](https://github.com/mailhog/MailHog) to view emails sent during development
 
@@ -795,7 +802,6 @@ We welcome contributions! Whether it's fixing a typo, improving documentation, o
 > **Important:** Cal.diy is a community fork. Contributions to this repo do **not** flow to Cal.com's production platform. See [CONTRIBUTING.md](./CONTRIBUTING.md) for details.
 
 - Check out our [Contributing Guide](./CONTRIBUTING.md) for detailed steps.
-- Join the discussion on [GitHub Discussions](https://github.com/calcom/cal.diy/discussions).
 - Please follow our coding standards and commit message conventions to keep the project consistent.
 
 Even small improvements matter — thank you for helping us grow!
@@ -816,7 +822,7 @@ We have a list of [help wanted](https://github.com/calcom/cal.diy/issues?q=is:is
 
 ### Translations
 
-Don't code but still want to contribute? Join our [Discussions](https://github.com/calcom/cal.diy/discussions) and help translate Cal.diy into your language.
+Don't code but still want to contribute? help translate Cal.diy into your language.
 
 <!-- ACKNOWLEDGEMENTS -->
 
